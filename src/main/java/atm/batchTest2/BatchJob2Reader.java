@@ -16,6 +16,7 @@ public class BatchJob2Reader implements ItemReader {
 	@Autowired
 	AccountRepository accountRepository;
 
+
 	@Override
 	public Object read() throws Exception {
 		System.out.println("========read=====");
