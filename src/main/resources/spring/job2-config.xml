@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:batch="http://www.springframework.org/schema/batch" xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:file="http://www.springframework.org/schema/integration/file"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/integration/file
+	    http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/batch
+        http://www.springframework.org/schema/batch/spring-batch.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+	    http://www.springframework.org/schema/util
+	    http://www.springframework.org/schema/util/spring-util.xsd
+	    http://www.springframework.org/schema/task
+        http://www.springframework.org/schema/task/spring-task.xsd
+        http://www.springframework.org/schema/jdbc
+	    http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+	    http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+       ">
+
+    <!--been component-scan  설정-->
+    <context:component-scan base-package="atm.*"/>
+
+    <batch:job id="batchJob2" restartable="true" job-repository="jobRepository" >
+        <batch:step id="step">
+            <batch:tasklet >
+                <batch:chunk reader="itemReader2" writer = "itemWriter2" commit-interval="1" />
+            </batch:tasklet>
+        </batch:step>
+    </batch:job>
+
+    <bean id="itemReader2" class="atm.batchTest2.BatchJob2Reader"/>
+    <bean id="itemWriter2" class="atm.batchTest2.BatchJob2Writer"/>
+
+    <bean id="jobRepository" class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+        <property name="transactionManager" ref="transactionManager"/>
+    </bean>
+    <!--<bean id="transactionManager" class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />-->
+
+
+    <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+        <property name="jobRepository" ref="jobRepository" />
+    </bean>
+
+
+    <context:property-placeholder location="classpath:applicationProperty.properties" />
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="false"/>
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager" p:dataSource-ref="datasource"/>
+    <bean id="datasource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${atm.driverClassName}"/>
+        <property name="url" value="${atm.url}"/>
+        <property name="username" value="${atm.username}"/>
+        <property name="password" value="${atm.password}"/>
+        <property name="initialSize" value="${atm.initialSize}"/>
+        <property name="maxWait" value="${atm.maxWait}"/>
+        <property name="maxActive" value="${atm.maxActive}"/>
+        <property name="validationQuery" value="${atm.validationQuery}"/>
+        <property name="testOnBorrow" value="${atm.testOnBorrow}"/>
+        <property name="testOnReturn" value="${atm.testOnReturn}"/>
+        <property name="testWhileIdle" value="${atm.testWhileIdle}"/>
+        <property name="maxIdle" value="${atm.maxIdle}"/>
+        <property name="minIdle" value="${atm.minIdle}"/>
+        <property name="timeBetweenEvictionRunsMillis" value="${atm.timeBetweenEvictionRunsMillis}"/>
+    </bean>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="datasource"/>
+        <property name="mapperLocations" value="classpath*:sqlmap/**/*.xml"/>
+        <property name="configLocation" value="classpath:/mybatis-config.xml"/>
+    </bean>
+
+
+    <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+    </bean>
+
+</beans>
